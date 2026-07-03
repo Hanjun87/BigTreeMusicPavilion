@@ -49,7 +49,7 @@
 /* ====== 按钮组 — .page左边缘=屏幕上方，竖向排列=屏幕横向 ====== */
   .btn-group {
     position: absolute;
-    left: 6%;
+    left: 10%;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -70,6 +70,12 @@
     padding: 18px 0;
     border: none;
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    letter-spacing: inherit;
+    line-height: inherit;
     font-family: 'Zpix', 'PingFang SC', 'Microsoft YaHei', monospace;
     font-size: clamp(15px, 4.5vw, 24px);
     font-weight: 400;
@@ -345,7 +351,7 @@
       <button class="btn" id="btnMusicList">
         <span class="btn-text">音乐列表</span>
       </button>
-      <a class="btn want" id="btnWantMore" href="mqq://im/chat?chat_type=c2c&uin=2938647756&version=1&src_type=web" style="position:relative;left:74px;">
+      <a class="btn want" id="btnWantMore" href="mqq://im/chat?chat_type=c2c&uin=2938647756&version=1&src_type=web">
         <span class="btn-text">我还想听</span>
       </a>
     </div>
