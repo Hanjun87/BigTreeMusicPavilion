@@ -345,9 +345,9 @@
       <button class="btn" id="btnMusicList">
         <span class="btn-text">音乐列表</span>
       </button>
-      <button class="btn want" id="btnWantMore">
+      <a class="btn want" id="btnWantMore" href="https://wpa.qq.com/msgrd?v=3&uin=2938647756&site=qq&menu=yes" target="_blank">
         <span class="btn-text">我还想听</span>
-      </button>
+      </a>
     </div>
 
     <!-- 音乐列表面板 -->
@@ -436,9 +436,6 @@
     btnClose.addEventListener('click', closeList);
     overlay.addEventListener('click', closeList);
 
-    document.getElementById('btnWantMore').addEventListener('click', () => {
-      window.location.href = 'http://wpa.qq.com/msgrd?v=3&uin=2938647756&site=qq&menu=yes';
-    });
   </script>
 
 </body>
