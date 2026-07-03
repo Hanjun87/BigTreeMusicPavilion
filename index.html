@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大树音乐馆</title>
+<!-- 像素字体 Zpix -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/zpix@3.1.0/dist/Zpix.woff2" as="font" crossorigin>
+<style>
+  @font-face {
+    font-family: 'Zpix';
+    src: url('https://cdn.jsdelivr.net/npm/zpix@3.1.0/dist/Zpix.woff2') format('woff2');
+    font-display: swap;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* ====== 整体旋转容器 ====== */
+  .page {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100vh;
+    height: 100vw;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center center;
+  }
+
+  /* ====== 背景图 — contain 完整显示不裁切 ====== */
+  .bg {
+    position: absolute;
+    inset: 0;
+    background: url('shouye.png') center / contain no-repeat;
+    background-color: #000;
+  }
+
+/* ====== 按钮组 — .page左边缘=屏幕上方，竖向排列=屏幕横向 ====== */
+  .btn-group {
+    position: absolute;
+    left: 6%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(36px, 10vh, 80px);
+  }
+
+  /* ====== 像素按钮 — 树绿色系 ====== */
+  .btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 按钮宽度跟随容器比例 */
+    width: 48%;
+    min-width: 150px;
+    max-width: 240px;
+    padding: 18px 0;
+    border: none;
+    cursor: pointer;
+    font-family: 'Zpix', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-size: clamp(15px, 4.5vw, 24px);
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 4px;
+    /* 树绿色底 — #76a830 来自背景大树主色 */
+    background: #76a830;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    /* 像素白边 + 深绿立体阴影 */
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff,
+      6px 0 0 #2b572a,
+      0 6px 0 #2b572a,
+      6px 6px 0 #2b572a,
+      3px 6px 0 #2b572a,
+      6px 3px 0 #2b572a;
+    transition: all 0.1s steps(2);
+    user-select: none;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 2px solid rgba(255,255,255,0.55);
+    image-rendering: pixelated;
+  }
+
+  .btn:hover {
+    background: #9dd443;
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff,
+      6px 0 0 #3c722a,
+      0 6px 0 #3c722a,
+      6px 6px 0 #3c722a,
+      3px 6px 0 #3c722a,
+      6px 3px 0 #3c722a;
+  }
+
+  .btn:active {
+    transform: translate(3px, 3px);
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff;
+  }
+
+  .btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ====== 我还想听 — 稍深的绿区分 ====== */
+  .btn.want {
+    background: #689831;
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff,
+      6px 0 0 #2b5814,
+      0 6px 0 #2b5814,
+      6px 6px 0 #2b5814,
+      3px 6px 0 #2b5814,
+      6px 3px 0 #2b5814;
+  }
+
+  .btn.want:hover {
+    background: #85b938;
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff,
+      6px 0 0 #376617,
+      0 6px 0 #376617,
+      6px 6px 0 #376617,
+      3px 6px 0 #376617,
+      6px 3px 0 #376617;
+  }
+
+  .btn.want:active {
+    transform: translate(3px, 3px);
+    box-shadow:
+      3px 0 0 #fff,
+      0 3px 0 #fff,
+      3px 3px 0 #fff;
+  }
+
+  /* ====== 音乐列表面板 ====== */
+  .list-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 10;
+    display: none;
+  }
+  .list-overlay.show { display: block; }
+
+  .list-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 82%;
+    max-width: 600px;
+    max-height: 78%;
+    overflow-y: auto;
+    z-index: 11;
+    display: none;
+    /* 像素绿底 */
+    background: #1a3a1a;
+    /* 像素白边框 */
+    border: 4px solid #fff;
+    outline: 3px solid #76a830;
+    outline-offset: -8px;
+    padding: 28px 24px 24px;
+    box-shadow:
+      6px 0 0 #2b572a,
+      0 6px 0 #2b572a,
+      6px 6px 0 #2b572a;
+    image-rendering: pixelated;
+  }
+  .list-panel.show { display: block; }
+
+  .list-close {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-family: 'Zpix', monospace;
+    font-size: 26px;
+    cursor: pointer;
+    padding: 4px 8px;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+  }
+  .list-close:hover { color: #9dd443; }
+
+  .list-title {
+    font-family: 'Zpix', monospace;
+    font-size: 26px;
+    color: #9dd443;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 20px;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    text-shadow: 2px 2px 0 #0d1a0d;
+  }
+
+  .song-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .song-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 10px;
+    border-bottom: 2px dashed #2b572a;
+    font-family: 'Zpix', 'PingFang SC', 'Microsoft YaHei', monospace;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+  }
+  .song-item:last-child { border-bottom: none; }
+
+  .song-num {
+    color: #9dd443;
+    font-size: 18px;
+    flex-shrink: 0;
+    padding-top: 1px;
+    min-width: 26px;
+  }
+
+  .song-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .song-name {
+    color: #fff;
+    font-size: 18px;
+    letter-spacing: 1px;
+    word-break: break-all;
+  }
+
+  .song-artist {
+    color: #85b938;
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+
+  .song-credit {
+    color: #689831;
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .song-play {
+    flex-shrink: 0;
+    align-self: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    cursor: pointer;
+    background: #76a830;
+    color: #fff;
+    font-family: 'Zpix', monospace;
+    font-size: 16px;
+    line-height: 36px;
+    text-align: center;
+    text-decoration: none;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    box-shadow:
+      2px 0 0 #fff,
+      0 2px 0 #fff,
+      2px 2px 0 #fff,
+      4px 0 0 #2b572a,
+      0 4px 0 #2b572a,
+      4px 4px 0 #2b572a,
+      2px 4px 0 #2b572a,
+      4px 2px 0 #2b572a;
+    transition: all 0.1s steps(2);
+    user-select: none;
+  }
+  .song-play:hover {
+    background: #9dd443;
+  }
+  .song-play:active {
+    transform: translate(2px, 2px);
+    box-shadow:
+      2px 0 0 #fff,
+      0 2px 0 #fff,
+      2px 2px 0 #fff;
+  }
+
+  /* 滚动条像素化 */
+  .list-panel::-webkit-scrollbar { width: 8px; }
+  .list-panel::-webkit-scrollbar-track { background: #0d1a0d; }
+  .list-panel::-webkit-scrollbar-thumb { background: #76a830; border: 1px solid #fff; }
+
+  /* ====== 响应式 ====== */
+  @media (max-width: 768px) {
+    .btn {
+      min-width: 120px;
+      padding: 12px 0;
+      letter-spacing: 2px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div class="page">
+    <div class="bg"></div>
+
+    <div class="btn-group">
+      <button class="btn" id="btnMusicList">
+        <span class="btn-text">音乐列表</span>
+      </button>
+      <button class="btn want" id="btnWantMore">
+        <span class="btn-text">我还想听</span>
+      </button>
+    </div>
+
+    <!-- 音乐列表面板 -->
+    <div class="list-overlay" id="listOverlay"></div>
+    <div class="list-panel" id="listPanel">
+      <button class="list-close" id="listClose">✕</button>
+      <div class="list-title">♪ 音乐列表 ♪</div>
+      <div class="song-list">
+        <div class="song-item">
+          <span class="song-num">01</span>
+          <div class="song-info">
+            <span class="song-name">《照花台》</span>
+            <span class="song-artist">郭麒麟</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22640951532%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">02</span>
+          <div class="song-info">
+            <span class="song-name">《相爱很难》</span>
+            <span class="song-artist">梅艳芳 / 张学友</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22137322%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">03</span>
+          <div class="song-info">
+            <span class="song-name">《星落》</span>
+            <span class="song-artist">霍尊</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22281744835%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">04</span>
+          <div class="song-info">
+            <span class="song-name">《一荤一素 (Live)》</span>
+            <span class="song-artist">毛不易</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22254554296%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">05</span>
+          <div class="song-info">
+            <span class="song-name">《这条小鱼在乎 (I'm a little fish)》</span>
+            <span class="song-artist">王OK / 洪佩瑜</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22485954361%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">06</span>
+          <div class="song-info">
+            <span class="song-name">《勋章》</span>
+            <span class="song-artist">鹿晗</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22104780330%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+        <div class="song-item">
+          <span class="song-num">07</span>
+          <div class="song-info">
+            <span class="song-name">《You & Me》</span>
+            <span class="song-artist">H-Slang & Choco</span>
+            <span class="song-credit">作词：H-Slang & Choco / 作曲：John Stary</span>
+          </div>
+          <a class="song-play" href="qqmusic://qq.com/media/playSonglist?p={%22song%22:[{%22type%22:%220%22,%22songid%22:%22708624%22}],%22action%22:%22play%22}" title="QQ音乐打开">♪</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const overlay = document.getElementById('listOverlay');
+    const panel = document.getElementById('listPanel');
+    const btnList = document.getElementById('btnMusicList');
+    const btnClose = document.getElementById('listClose');
+
+    function openList() {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    }
+    function closeList() {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+    }
+
+    btnList.addEventListener('click', openList);
+    btnClose.addEventListener('click', closeList);
+    overlay.addEventListener('click', closeList);
+
+    document.getElementById('btnWantMore').addEventListener('click', () => {
+      window.location.href = 'tencent://message/?uin=2938647756';
+    });
+  </script>
+
+</body>
+</html>
